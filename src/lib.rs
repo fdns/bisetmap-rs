@@ -5,8 +5,8 @@ use std::{
 
 #[derive(Debug, Clone)]
 pub struct BiSetMap<K, V, S = RandomState> {
-    left: HashMap<K, HashSet<V>, S>,
-    right: HashMap<V, HashSet<K>, S>,
+    left: HashMap<K, HashSet<V, S>, S>,
+    right: HashMap<V, HashSet<K, S>, S>,
 }
 
 impl<K, V> Default for BiSetMap<K, V, RandomState> {
@@ -23,13 +23,20 @@ impl<K, V, S> BiSetMap<K, V, S>
 where
     K: Eq + Hash + Clone,
     V: Eq + Hash + Clone,
-    S: BuildHasher,
+    S: BuildHasher + Default,
 {
-    pub fn get_left(&self, k: &K) -> Option<&HashSet<V>> {
+    pub fn with_hasher() -> Self {
+        BiSetMap {
+            left: HashMap::with_hasher(S::default()),
+            right: HashMap::with_hasher(S::default()),
+        }
+    }
+
+    pub fn get_left(&self, k: &K) -> Option<&HashSet<V, S>> {
         self.left.get(k)
     }
 
-    pub fn get_right(&self, v: &V) -> Option<&HashSet<K>> {
+    pub fn get_right(&self, v: &V) -> Option<&HashSet<K, S>> {
         self.right.get(v)
     }
 
@@ -47,8 +54,8 @@ where
     }
 
     fn remove<A: Eq + Hash + Clone, B: Eq + Hash + Clone>(
-        left_map: &mut HashMap<A, HashSet<B>, S>,
-        right_map: &mut HashMap<B, HashSet<A>, S>,
+        left_map: &mut HashMap<A, HashSet<B, S>, S>,
+        right_map: &mut HashMap<B, HashSet<A, S>, S>,
         k: &A,
     ) {
         let left = left_map.remove(k);
@@ -66,7 +73,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
+    use std::collections::{hash_map::RandomState, HashSet};
 
     use crate::BiSetMap;
 
@@ -190,6 +197,15 @@ mod tests {
         let mut bivecmap = BiSetMap::default();
         bivecmap.insert(1, 10);
         bivecmap.remove_right(&1);
+
+        assert_eq!(bivecmap.get_left(&1).unwrap(), &HashSet::from([10]));
+        assert_eq!(bivecmap.get_right(&10).unwrap(), &HashSet::from([1]));
+    }
+
+    #[test]
+    fn with_hasher() {
+        let mut bivecmap = BiSetMap::<_, _, RandomState>::with_hasher();
+        bivecmap.insert(1, 10);
 
         assert_eq!(bivecmap.get_left(&1).unwrap(), &HashSet::from([10]));
         assert_eq!(bivecmap.get_right(&10).unwrap(), &HashSet::from([1]));
