@@ -1,11 +1,11 @@
 use std::{
-    collections::HashMap,
+    collections::{hash_map::RandomState, HashMap},
     hash::{BuildHasher, Hash},
 };
 
 use crate::BiSetDataMap;
 
-pub struct BiSetMap<K, V, S>(BiSetDataMap<K, V, S, ()>);
+pub struct BiSetMap<K, V, S = RandomState>(BiSetDataMap<K, V, S, ()>);
 
 impl<K, V, S> Default for BiSetMap<K, V, S>
 where
@@ -48,8 +48,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::collections::hash_map::RandomState;
-
     use super::*;
 
     #[test]
